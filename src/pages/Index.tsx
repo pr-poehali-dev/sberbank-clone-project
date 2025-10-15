@@ -6,7 +6,7 @@ import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
-type Page = 'login' | 'pin' | 'main' | 'savings' | 'payments' | 'history' | 'profile' | 'cards' | 'transfer';
+type Page = 'login' | 'pin' | 'main' | 'savings' | 'payments' | 'history' | 'profile' | 'cards' | 'transfer' | 'profile-details' | 'settings' | 'security' | 'notifications' | 'documents';
 type LoginStep = 'username' | 'password' | 'sms';
 
 interface Transaction {
@@ -67,6 +67,16 @@ export default function Index() {
   const [transferRecipient, setTransferRecipient] = useState('');
   const [transferComment, setTransferComment] = useState('');
   const [selectedCardId, setSelectedCardId] = useState(1);
+  const [userProfile] = useState({
+    firstName: 'Иван',
+    lastName: 'Петров',
+    middleName: 'Сергеевич',
+    birthDate: '15.03.1990',
+    phone: '+7 (900) 123-45-67',
+    email: 'ivan.petrov@example.com',
+    passport: '4512 123456',
+    inn: '773012345678',
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -980,28 +990,47 @@ export default function Index() {
           <Header title="Профиль" />
 
           <div className="p-4 space-y-4">
-            <Card className="bg-white rounded-3xl p-6">
-              <div className="flex items-center gap-4 mb-6">
+            <Card 
+              className="bg-white rounded-3xl p-6 cursor-pointer hover:shadow-lg transition-all"
+              onClick={() => setPage('profile-details')}
+            >
+              <div className="flex items-center gap-4 mb-4">
                 <div className="w-20 h-20 bg-gradient-to-br from-[#21A038] to-[#1a8030] rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                  {username.slice(0, 2).toUpperCase() || 'ИП'}
+                  {userProfile.firstName[0]}{userProfile.lastName[0]}
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">{username || 'Пользователь'}</h3>
-                  <p className="text-gray-600">+7 900 000-00-00</p>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {userProfile.lastName} {userProfile.firstName}
+                  </h3>
+                  <p className="text-gray-600">{userProfile.phone}</p>
                 </div>
+                <Icon name="ChevronRight" size={20} className="text-gray-400" />
               </div>
 
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Дата рождения</p>
+                  <p className="font-medium">{userProfile.birthDate}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Email</p>
+                  <p className="font-medium text-sm truncate">{userProfile.email}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="bg-white rounded-3xl p-4">
               <div className="space-y-2">
                 {[
-                  { icon: 'Settings', title: 'Настройки' },
-                  { icon: 'Shield', title: 'Безопасность' },
-                  { icon: 'Bell', title: 'Уведомления' },
-                  { icon: 'CreditCard', title: 'Способы оплаты' },
-                  { icon: 'HelpCircle', title: 'Помощь' },
-                  { icon: 'FileText', title: 'Документы' },
+                  { icon: 'Settings', title: 'Настройки', page: 'settings' as Page },
+                  { icon: 'Shield', title: 'Безопасность', page: 'security' as Page },
+                  { icon: 'Bell', title: 'Уведомления', page: 'notifications' as Page },
+                  { icon: 'FileText', title: 'Документы', page: 'documents' as Page },
+                  { icon: 'HelpCircle', title: 'Помощь и поддержка', page: 'profile' as Page },
                 ].map((item, index) => (
                   <div
                     key={index}
+                    onClick={() => setPage(item.page)}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-all group"
                   >
                     <div className="flex items-center gap-3">
@@ -1031,6 +1060,337 @@ export default function Index() {
               <Icon name="LogOut" size={18} className="mr-2" />
               Выйти из аккаунта
             </Button>
+          </div>
+
+          <NavBar />
+        </div>
+      </div>
+    );
+  }
+
+  if (page === 'profile-details') {
+    return (
+      <div className="min-h-screen bg-[#f5f5f5] pb-20 animate-fade-in">
+        <div className="max-w-md mx-auto">
+          <header className="bg-white border-b sticky top-0 z-40">
+            <div className="px-4 py-4 flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setPage('profile')}
+                className="hover:bg-gray-100 transition-all"
+              >
+                <Icon name="ArrowLeft" size={24} />
+              </Button>
+              <h1 className="text-xl font-bold text-gray-900">Личные данные</h1>
+            </div>
+          </header>
+
+          <div className="p-4 space-y-4">
+            <Card className="bg-white rounded-3xl p-6">
+              <div className="flex items-center justify-center mb-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-[#21A038] to-[#1a8030] rounded-full flex items-center justify-center text-white text-4xl font-bold">
+                  {userProfile.firstName[0]}{userProfile.lastName[0]}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="pb-4 border-b">
+                  <p className="text-sm text-gray-500 mb-1">Фамилия</p>
+                  <p className="text-lg font-medium">{userProfile.lastName}</p>
+                </div>
+
+                <div className="pb-4 border-b">
+                  <p className="text-sm text-gray-500 mb-1">Имя</p>
+                  <p className="text-lg font-medium">{userProfile.firstName}</p>
+                </div>
+
+                <div className="pb-4 border-b">
+                  <p className="text-sm text-gray-500 mb-1">Отчество</p>
+                  <p className="text-lg font-medium">{userProfile.middleName}</p>
+                </div>
+
+                <div className="pb-4 border-b">
+                  <p className="text-sm text-gray-500 mb-1">Дата рождения</p>
+                  <p className="text-lg font-medium">{userProfile.birthDate}</p>
+                </div>
+
+                <div className="pb-4 border-b">
+                  <p className="text-sm text-gray-500 mb-1">Телефон</p>
+                  <p className="text-lg font-medium">{userProfile.phone}</p>
+                </div>
+
+                <div className="pb-4 border-b">
+                  <p className="text-sm text-gray-500 mb-1">Email</p>
+                  <p className="text-lg font-medium">{userProfile.email}</p>
+                </div>
+
+                <div className="pb-4 border-b">
+                  <p className="text-sm text-gray-500 mb-1">Паспорт</p>
+                  <p className="text-lg font-medium">{userProfile.passport}</p>
+                </div>
+
+                <div className="pb-4">
+                  <p className="text-sm text-gray-500 mb-1">ИНН</p>
+                  <p className="text-lg font-medium">{userProfile.inn}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Button className="w-full h-12 bg-[#21A038] hover:bg-[#1a8030] text-white rounded-2xl">
+              <Icon name="Edit" size={18} className="mr-2" />
+              Редактировать данные
+            </Button>
+          </div>
+
+          <NavBar />
+        </div>
+      </div>
+    );
+  }
+
+  if (page === 'settings') {
+    return (
+      <div className="min-h-screen bg-[#f5f5f5] pb-20 animate-fade-in">
+        <div className="max-w-md mx-auto">
+          <header className="bg-white border-b sticky top-0 z-40">
+            <div className="px-4 py-4 flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setPage('profile')}
+                className="hover:bg-gray-100 transition-all"
+              >
+                <Icon name="ArrowLeft" size={24} />
+              </Button>
+              <h1 className="text-xl font-bold text-gray-900">Настройки</h1>
+            </div>
+          </header>
+
+          <div className="p-4 space-y-4">
+            <Card className="bg-white rounded-3xl p-4">
+              <h3 className="font-bold mb-3">Общие</h3>
+              <div className="space-y-3">
+                {[
+                  { title: 'Язык приложения', value: 'Русский' },
+                  { title: 'Валюта', value: 'Российский рубль (₽)' },
+                  { title: 'Часовой пояс', value: 'МСК (UTC+3)' },
+                ].map((item, i) => (
+                  <div key={i} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-xl cursor-pointer">
+                    <span className="font-medium">{item.title}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600 text-sm">{item.value}</span>
+                      <Icon name="ChevronRight" size={16} className="text-gray-400" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="bg-white rounded-3xl p-4">
+              <h3 className="font-bold mb-3">Отображение</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3">
+                  <span className="font-medium">Показывать баланс</span>
+                  <button className={`w-12 h-6 rounded-full transition-colors ${showBalance ? 'bg-[#21A038]' : 'bg-gray-300'}`}>
+                    <div className={`w-5 h-5 bg-white rounded-full transition-transform ${showBalance ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+                <div className="flex justify-between items-center p-3">
+                  <span className="font-medium">Темная тема</span>
+                  <button className="w-12 h-6 rounded-full bg-gray-300">
+                    <div className="w-5 h-5 bg-white rounded-full translate-x-1" />
+                  </button>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <NavBar />
+        </div>
+      </div>
+    );
+  }
+
+  if (page === 'security') {
+    return (
+      <div className="min-h-screen bg-[#f5f5f5] pb-20 animate-fade-in">
+        <div className="max-w-md mx-auto">
+          <header className="bg-white border-b sticky top-0 z-40">
+            <div className="px-4 py-4 flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setPage('profile')}
+                className="hover:bg-gray-100 transition-all"
+              >
+                <Icon name="ArrowLeft" size={24} />
+              </Button>
+              <h1 className="text-xl font-bold text-gray-900">Безопасность</h1>
+            </div>
+          </header>
+
+          <div className="p-4 space-y-4">
+            <Card className="bg-white rounded-3xl p-4">
+              <h3 className="font-bold mb-3">Вход и авторизация</h3>
+              <div className="space-y-2">
+                {[
+                  { icon: 'Key', title: 'Изменить пароль' },
+                  { icon: 'Fingerprint', title: 'Вход по отпечатку пальца' },
+                  { icon: 'Lock', title: 'Изменить PIN-код' },
+                  { icon: 'Smartphone', title: 'Вход по SMS' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer">
+                    <Icon name={item.icon as any} size={20} className="text-[#21A038]" />
+                    <span className="font-medium flex-1">{item.title}</span>
+                    <Icon name="ChevronRight" size={16} className="text-gray-400" />
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="bg-white rounded-3xl p-4">
+              <h3 className="font-bold mb-3">Активные сессии</h3>
+              <div className="space-y-3">
+                <div className="p-3 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Icon name="Monitor" size={20} className="text-[#21A038]" />
+                    <div className="flex-1">
+                      <p className="font-medium">Текущее устройство</p>
+                      <p className="text-xs text-gray-500">Москва • Сейчас</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <NavBar />
+        </div>
+      </div>
+    );
+  }
+
+  if (page === 'notifications') {
+    return (
+      <div className="min-h-screen bg-[#f5f5f5] pb-20 animate-fade-in">
+        <div className="max-w-md mx-auto">
+          <header className="bg-white border-b sticky top-0 z-40">
+            <div className="px-4 py-4 flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setPage('profile')}
+                className="hover:bg-gray-100 transition-all"
+              >
+                <Icon name="ArrowLeft" size={24} />
+              </Button>
+              <h1 className="text-xl font-bold text-gray-900">Уведомления</h1>
+            </div>
+          </header>
+
+          <div className="p-4 space-y-4">
+            <Card className="bg-white rounded-3xl p-4">
+              <h3 className="font-bold mb-3">Push-уведомления</h3>
+              <div className="space-y-3">
+                {[
+                  { title: 'Операции по картам', enabled: true },
+                  { title: 'Акции и предложения', enabled: false },
+                  { title: 'Новости банка', enabled: true },
+                  { title: 'Платежи и переводы', enabled: true },
+                ].map((item, i) => (
+                  <div key={i} className="flex justify-between items-center p-3">
+                    <span className="font-medium">{item.title}</span>
+                    <button className={`w-12 h-6 rounded-full transition-colors ${item.enabled ? 'bg-[#21A038]' : 'bg-gray-300'}`}>
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${item.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="bg-white rounded-3xl p-4">
+              <h3 className="font-bold mb-3">Email-уведомления</h3>
+              <div className="space-y-3">
+                {[
+                  { title: 'Выписки по счетам', enabled: true },
+                  { title: 'Рассылки и новости', enabled: false },
+                ].map((item, i) => (
+                  <div key={i} className="flex justify-between items-center p-3">
+                    <span className="font-medium">{item.title}</span>
+                    <button className={`w-12 h-6 rounded-full transition-colors ${item.enabled ? 'bg-[#21A038]' : 'bg-gray-300'}`}>
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${item.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          <NavBar />
+        </div>
+      </div>
+    );
+  }
+
+  if (page === 'documents') {
+    return (
+      <div className="min-h-screen bg-[#f5f5f5] pb-20 animate-fade-in">
+        <div className="max-w-md mx-auto">
+          <header className="bg-white border-b sticky top-0 z-40">
+            <div className="px-4 py-4 flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setPage('profile')}
+                className="hover:bg-gray-100 transition-all"
+              >
+                <Icon name="ArrowLeft" size={24} />
+              </Button>
+              <h1 className="text-xl font-bold text-gray-900">Документы</h1>
+            </div>
+          </header>
+
+          <div className="p-4 space-y-4">
+            <Card className="bg-white rounded-3xl p-4">
+              <h3 className="font-bold mb-3">Договоры и соглашения</h3>
+              <div className="space-y-2">
+                {[
+                  { icon: 'FileText', title: 'Договор банковского обслуживания', date: '15.03.2024' },
+                  { icon: 'FileText', title: 'Тарифы и условия', date: '15.03.2024' },
+                  { icon: 'FileText', title: 'Согласие на обработку данных', date: '15.03.2024' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer">
+                    <Icon name={item.icon as any} size={20} className="text-[#21A038]" />
+                    <div className="flex-1">
+                      <p className="font-medium">{item.title}</p>
+                      <p className="text-xs text-gray-500">{item.date}</p>
+                    </div>
+                    <Icon name="Download" size={16} className="text-gray-400" />
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="bg-white rounded-3xl p-4">
+              <h3 className="font-bold mb-3">Выписки и справки</h3>
+              <div className="space-y-2">
+                {[
+                  { icon: 'Receipt', title: 'Выписка за октябрь 2024', date: '15.10.2024' },
+                  { icon: 'Receipt', title: 'Выписка за сентябрь 2024', date: '30.09.2024' },
+                  { icon: 'FileCheck', title: 'Справка о состоянии счета', date: '10.10.2024' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer">
+                    <Icon name={item.icon as any} size={20} className="text-[#21A038]" />
+                    <div className="flex-1">
+                      <p className="font-medium">{item.title}</p>
+                      <p className="text-xs text-gray-500">{item.date}</p>
+                    </div>
+                    <Icon name="Download" size={16} className="text-gray-400" />
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
 
           <NavBar />
