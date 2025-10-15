@@ -1,437 +1,468 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 
-interface Transaction {
-  id: number;
-  type: string;
-  amount: number;
-  date: string;
-  description: string;
-}
-
-interface BankCard {
-  id: number;
-  name: string;
-  number: string;
-  balance: number;
-  type: string;
-}
+type Page = 'login' | 'sms' | 'pincode' | 'main' | 'wallet';
 
 export default function Index() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState('main');
+  const [page, setPage] = useState<Page>('pincode');
+  const [smsCode, setSmsCode] = useState(['', '', '', '']);
+  const [pinCode, setPinCode] = useState(['', '', '', '', '']);
 
-  const cards: BankCard[] = [
-    { id: 1, name: 'Дебетовая карта', number: '12228 50000', balance: 156780.50, type: 'debit' },
-    { id: 2, name: 'Кредитная карта', number: '0090 0024', balance: 45000, type: 'credit' }
-  ];
-
-  const transactions: Transaction[] = [
-    { id: 1, type: 'expense', amount: -450, date: '15 окт 2025', description: 'Магазин Пятёрочка' },
-    { id: 2, type: 'income', amount: 5000, date: '14 окт 2025', description: 'Перевод от Ивана М.' },
-    { id: 3, type: 'expense', amount: -1200, date: '14 окт 2025', description: 'Оплата интернета' },
-    { id: 4, type: 'expense', amount: -890, date: '13 окт 2025', description: 'Ресторан' },
-    { id: 5, type: 'income', amount: 75000, date: '10 окт 2025', description: 'Зачисление зарплаты' }
-  ];
-
-  const handleLogin = () => {
-    if (login && password) {
-      setIsLoggedIn(true);
+  const handleSmsInput = (index: number, value: string) => {
+    if (value.length <= 1 && /^\d*$/.test(value)) {
+      const newCode = [...smsCode];
+      newCode[index] = value;
+      setSmsCode(newCode);
+      if (value && index < 3) {
+        document.getElementById(`sms-${index + 1}`)?.focus();
+      }
     }
   };
 
-  if (!isLoggedIn) {
+  const handlePinInput = (num: string) => {
+    const firstEmpty = pinCode.findIndex(v => !v);
+    if (firstEmpty !== -1) {
+      const newCode = [...pinCode];
+      newCode[firstEmpty] = num;
+      setPinCode(newCode);
+      if (firstEmpty === 4) {
+        setTimeout(() => setPage('main'), 300);
+      }
+    }
+  };
+
+  const handlePinDelete = () => {
+    const lastFilled = pinCode.map((v, i) => v ? i : -1).filter(i => i !== -1).pop();
+    if (lastFilled !== undefined) {
+      const newCode = [...pinCode];
+      newCode[lastFilled] = '';
+      setPinCode(newCode);
+    }
+  };
+
+  if (page === 'sms') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#21A038] to-[#147B2C] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-2xl">
-          <CardHeader className="text-center pb-4">
-            <div className="mb-6 flex justify-center">
-              <div className="w-16 h-16 bg-[#21A038] rounded-2xl flex items-center justify-center">
-                <Icon name="Landmark" size={32} className="text-white" />
-              </div>
+      <div className="min-h-screen bg-[#f5f5f5] flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white rounded-3xl shadow-lg p-8">
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center gap-2">
+              <Icon name="CheckCircle2" size={28} className="text-[#21A038]" />
+              <span className="text-[#21A038] text-xl font-bold">СБЕР БАНК</span>
             </div>
-            <CardTitle className="text-3xl font-bold text-[#333333]">СберБанк Онлайн</CardTitle>
-            <p className="text-muted-foreground mt-2">Войдите в личный кабинет</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[#333333]">Логин</label>
+          </div>
+          
+          <Button
+            onClick={() => setPage('pincode')}
+            variant="ghost"
+            className="mb-6 p-0 h-auto hover:bg-transparent"
+          >
+            <Icon name="ArrowLeft" size={24} className="text-gray-700" />
+          </Button>
+
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Введите код из СМС</h1>
+          <p className="text-gray-500 text-sm mb-6">Мы отправили его на ваш номер</p>
+
+          <div className="flex gap-3 mb-4">
+            {smsCode.map((digit, i) => (
               <Input
-                type="text"
-                placeholder="Введите логин"
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
-                className="h-12"
+                key={i}
+                id={`sms-${i}`}
+                value={digit}
+                onChange={(e) => handleSmsInput(i, e.target.value)}
+                className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-[#21A038]"
+                maxLength={1}
               />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[#333333]">Пароль</label>
-              <Input
-                type="password"
-                placeholder="Введите пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-12"
-              />
-            </div>
-            <Button
-              onClick={handleLogin}
-              className="w-full h-12 bg-[#21A038] hover:bg-[#147B2C] text-white font-medium text-base"
-            >
-              Войти
-            </Button>
-            <div className="text-center">
-              <a href="#" className="text-sm text-[#21A038] hover:underline">
-                Забыли пароль?
-              </a>
-            </div>
-          </CardContent>
+            ))}
+          </div>
+
+          <p className="text-sm text-gray-600 mb-2">Через 1:59 можно получить новый код</p>
+          <button className="text-[#21A038] text-sm font-medium">Не пришёл код</button>
         </Card>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#21A038] rounded-xl flex items-center justify-center">
-              <Icon name="Landmark" size={20} className="text-white" />
+  if (page === 'pincode') {
+    return (
+      <div className="min-h-screen bg-[#f5f5f5] flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white rounded-3xl shadow-lg p-8">
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center gap-2">
+              <Icon name="CheckCircle2" size={28} className="text-[#21A038]" />
+              <span className="text-[#21A038] text-xl font-bold">СБЕР БАНК</span>
             </div>
-            <span className="text-xl font-bold text-[#333333]">СберБанк</span>
           </div>
+
           <Button
+            onClick={() => setPage('sms')}
             variant="ghost"
-            size="icon"
-            onClick={() => setIsLoggedIn(false)}
-            className="text-muted-foreground hover:text-foreground"
+            className="mb-6 p-0 h-auto hover:bg-transparent"
           >
-            <Icon name="LogOut" size={20} />
+            <Icon name="ArrowLeft" size={24} className="text-gray-700" />
           </Button>
-        </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full bg-white border h-auto p-1">
-            <TabsTrigger value="main" className="data-[state=active]:bg-[#21A038] data-[state=active]:text-white">
-              <Icon name="Home" size={18} className="mr-2" />
-              Главная
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="data-[state=active]:bg-[#21A038] data-[state=active]:text-white">
-              <Icon name="CreditCard" size={18} className="mr-2" />
-              Платежи
-            </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-[#21A038] data-[state=active]:text-white">
-              <Icon name="Clock" size={18} className="mr-2" />
-              История
-            </TabsTrigger>
-            <TabsTrigger value="transfers" className="data-[state=active]:bg-[#21A038] data-[state=active]:text-white">
-              <Icon name="ArrowLeftRight" size={18} className="mr-2" />
-              Переводы
-            </TabsTrigger>
-            <TabsTrigger value="cards" className="data-[state=active]:bg-[#21A038] data-[state=active]:text-white">
-              <Icon name="Wallet" size={18} className="mr-2" />
-              Карты
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="data-[state=active]:bg-[#21A038] data-[state=active]:text-white">
-              <Icon name="User" size={18} className="mr-2" />
-              Профиль
-            </TabsTrigger>
-          </TabsList>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Придумайте код для входа</h1>
+          <p className="text-gray-500 text-sm mb-8">
+            В следующий раз сможете войти по этому коду без пароля или номера карты
+          </p>
 
-          <TabsContent value="main" className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-[#333333] mb-4">Мои счета</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                {cards.map((card) => (
-                  <Card key={card.id} className="border-2 hover:shadow-lg transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg font-medium text-[#333333]">{card.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1">••{card.number}</p>
-                        </div>
-                        <Button variant="ghost" size="icon" className="text-[#21A038]">
-                          <Icon name="MoreVertical" size={20} />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <p className="text-3xl font-bold text-[#333333]">
-                          {card.balance.toLocaleString('ru-RU', { minimumFractionDigits: 2 })} ₽
-                        </p>
-                        <div className="flex gap-2 mt-4">
-                          <Button size="sm" className="bg-[#21A038] hover:bg-[#147B2C] text-white flex-1">
-                            <Icon name="Send" size={16} className="mr-1" />
-                            Перевести
-                          </Button>
-                          <Button size="sm" variant="outline" className="flex-1 border-[#21A038] text-[#21A038]">
-                            <Icon name="Plus" size={16} className="mr-1" />
-                            Пополнить
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+          <div className="flex gap-3 justify-center mb-8">
+            {pinCode.map((digit, i) => (
+              <div
+                key={i}
+                className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center text-xl font-bold transition-all ${
+                  digit ? 'bg-gray-200 border-gray-300 text-gray-700' : 'bg-gray-100 border-gray-200 text-transparent'
+                }`}
+              >
+                {digit || '0'}
               </div>
-            </div>
+            ))}
+          </div>
 
-            <div>
-              <h3 className="text-xl font-bold text-[#333333] mb-4">Быстрые действия</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 bg-[#21A038]/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Icon name="Smartphone" size={24} className="text-[#21A038]" />
-                    </div>
-                    <p className="text-sm font-medium text-[#333333]">Мобильный</p>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 bg-[#21A038]/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Icon name="Zap" size={24} className="text-[#21A038]" />
-                    </div>
-                    <p className="text-sm font-medium text-[#333333]">Коммуналка</p>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 bg-[#21A038]/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Icon name="Users" size={24} className="text-[#21A038]" />
-                    </div>
-                    <p className="text-sm font-medium text-[#333333]">Перевод</p>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 bg-[#21A038]/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Icon name="ShoppingCart" size={24} className="text-[#21A038]" />
-                    </div>
-                    <p className="text-sm font-medium text-[#333333]">Покупки</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="payments" className="space-y-4">
-            <h2 className="text-2xl font-bold text-[#333333]">Платежи и переводы</h2>
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <Icon name="Smartphone" size={32} className="text-[#21A038] mb-3" />
-                  <h3 className="font-bold text-[#333333] mb-1">Мобильная связь</h3>
-                  <p className="text-sm text-muted-foreground">Пополнение телефона</p>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <Icon name="Zap" size={32} className="text-[#21A038] mb-3" />
-                  <h3 className="font-bold text-[#333333] mb-1">ЖКХ</h3>
-                  <p className="text-sm text-muted-foreground">Оплата коммунальных услуг</p>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <Icon name="Wifi" size={32} className="text-[#21A038] mb-3" />
-                  <h3 className="font-bold text-[#333333] mb-1">Интернет и ТВ</h3>
-                  <p className="text-sm text-muted-foreground">Оплата провайдеров</p>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <Icon name="Car" size={32} className="text-[#21A038] mb-3" />
-                  <h3 className="font-bold text-[#333333] mb-1">Штрафы ГИБДД</h3>
-                  <p className="text-sm text-muted-foreground">Проверка и оплата</p>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <Icon name="Building" size={32} className="text-[#21A038] mb-3" />
-                  <h3 className="font-bold text-[#333333] mb-1">Налоги</h3>
-                  <p className="text-sm text-muted-foreground">Уплата налогов</p>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <Icon name="Receipt" size={32} className="text-[#21A038] mb-3" />
-                  <h3 className="font-bold text-[#333333] mb-1">По реквизитам</h3>
-                  <p className="text-sm text-muted-foreground">Произвольный платёж</p>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-[#333333]">История операций</h2>
-              <Button variant="outline" size="sm" className="border-[#21A038] text-[#21A038]">
-                <Icon name="Filter" size={16} className="mr-2" />
-                Фильтры
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
+              <Button
+                key={num}
+                onClick={() => handlePinInput(num)}
+                variant="ghost"
+                className="h-16 text-2xl font-bold bg-gray-100 hover:bg-gray-200 rounded-2xl"
+              >
+                {num}
               </Button>
-            </div>
-            <Card>
-              <CardContent className="p-0">
-                {transactions.map((transaction, index) => (
-                  <div
-                    key={transaction.id}
-                    className={`p-4 flex items-center justify-between hover:bg-muted/50 transition-colors ${
-                      index !== transactions.length - 1 ? 'border-b' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
-                        }`}
-                      >
-                        <Icon
-                          name={transaction.type === 'income' ? 'ArrowDownLeft' : 'ArrowUpRight'}
-                          size={20}
-                          className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium text-[#333333]">{transaction.description}</p>
-                        <p className="text-sm text-muted-foreground">{transaction.date}</p>
-                      </div>
-                    </div>
-                    <div
-                      className={`text-lg font-bold ${
-                        transaction.type === 'income' ? 'text-green-600' : 'text-[#333333]'
-                      }`}
-                    >
-                      {transaction.amount > 0 ? '+' : ''}
-                      {transaction.amount.toLocaleString('ru-RU')} ₽
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
+            ))}
+            <div />
+            <Button
+              onClick={() => handlePinInput('0')}
+              variant="ghost"
+              className="h-16 text-2xl font-bold bg-gray-100 hover:bg-gray-200 rounded-2xl"
+            >
+              0
+            </Button>
+            <Button
+              onClick={handlePinDelete}
+              variant="ghost"
+              className="h-16 bg-gray-100 hover:bg-gray-200 rounded-2xl"
+            >
+              <Icon name="Delete" size={24} />
+            </Button>
+          </div>
 
-          <TabsContent value="transfers" className="space-y-4">
-            <h2 className="text-2xl font-bold text-[#333333]">Переводы</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Новый перевод</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#333333]">Номер карты получателя</label>
-                  <Input placeholder="0000 0000 0000 0000" className="h-12" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#333333]">Сумма</label>
-                  <Input placeholder="0" type="number" className="h-12" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#333333]">Комментарий</label>
-                  <Input placeholder="Необязательно" className="h-12" />
-                </div>
-                <Button className="w-full h-12 bg-[#21A038] hover:bg-[#147B2C] text-white">
-                  <Icon name="Send" size={18} className="mr-2" />
-                  Отправить перевод
+          <button className="text-[#21A038] text-sm font-medium w-full">Войти без кода</button>
+          <p className="text-center text-xs text-gray-500 mt-4">
+            Или настройте вход по <a href="#" className="text-[#21A038] underline">логину и паролю</a>
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (page === 'wallet') {
+    return (
+      <div className="min-h-screen bg-[#dcd9f0]">
+        <div className="max-w-md mx-auto bg-[#dcd9f0] min-h-screen pb-20">
+          <header className="p-4 flex items-center justify-between gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0" />
+            <div className="flex-1 bg-white/60 backdrop-blur rounded-full px-4 py-2.5 flex items-center gap-2">
+              <Icon name="Search" size={18} className="text-gray-500" />
+              <span className="text-gray-600 text-sm">Поиск</span>
+            </div>
+            <Button variant="ghost" size="icon" className="flex-shrink-0">
+              <Icon name="Grid3x3" size={24} />
+            </Button>
+          </header>
+
+          <div className="px-4 py-2">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-3xl font-bold text-gray-900">Кошелёк</h1>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon">
+                  <Icon name="MoreHorizontal" size={24} />
                 </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                <Button variant="ghost" size="icon">
+                  <Icon name="EyeOff" size={24} />
+                </Button>
+              </div>
+            </div>
 
-          <TabsContent value="cards" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-[#333333]">Мои карты</h2>
-              <Button className="bg-[#21A038] hover:bg-[#147B2C] text-white">
-                <Icon name="Plus" size={18} className="mr-2" />
-                Заказать карту
+            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+              <Card className="min-w-[100px] max-w-[100px] bg-white rounded-3xl p-4 flex flex-col gap-3 h-40">
+                <div className="flex-1 flex items-center justify-center">
+                  <Icon name="QrCode" size={36} />
+                </div>
+                <div className="flex items-center justify-center">
+                  <Icon name="Shield" size={28} />
+                </div>
+              </Card>
+
+              <Card className="min-w-[220px] max-w-[220px] bg-white rounded-3xl p-4 relative h-40">
+                <div className="flex gap-2 mb-3">
+                  <div className="w-12 h-8 bg-gradient-to-br from-gray-700 to-gray-900 rounded-md" />
+                  <div className="w-12 h-8 bg-gradient-to-br from-gray-700 to-gray-900 rounded-md" />
+                </div>
+                <div className="flex gap-3 text-xs text-gray-500 mb-2">
+                  <span>2512</span>
+                  <span>4771</span>
+                </div>
+                <p className="text-2xl font-bold mb-1">0 ₽</p>
+                <p className="text-xs text-gray-500">Счёт •• 1253</p>
+                <div className="absolute top-3 right-3">
+                  <div className="px-2 py-1 bg-orange-100 text-orange-600 text-[10px] rounded font-medium">
+                    Заблокирована
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="min-w-[140px] max-w-[140px] bg-white rounded-3xl p-4 h-40">
+                <div className="w-10 h-10 bg-[#21A038] rounded-xl flex items-center justify-center mb-3">
+                  <span className="text-white font-bold text-lg">Р</span>
+                </div>
+                <p className="text-2xl font-bold mb-1">0 ₽</p>
+                <p className="text-xs text-gray-500">Счёт •• 5467</p>
+              </Card>
+
+              <Card className="min-w-[140px] max-w-[140px] bg-white rounded-3xl p-4 h-40">
+                <div className="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center mb-3">
+                  <span className="text-gray-600 font-bold text-lg">С</span>
+                </div>
+                <p className="text-2xl font-bold mb-1">0</p>
+                <p className="text-xs text-gray-500">СберСпасибо</p>
+              </Card>
+            </div>
+
+            <Card className="bg-white rounded-3xl p-4 mb-4 flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm mb-1">До 13,5% годовых</h3>
+                <p className="text-xs text-gray-500">Откройте «Накопительный счёт»</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                  <Icon name="Wallet" size={20} className="text-green-600" />
+                </div>
+                <Button className="bg-[#21A038] hover:bg-[#1a8030] text-white rounded-xl px-4 h-9 text-sm">
+                  Открыть
+                </Button>
+              </div>
+              <Button variant="ghost" size="icon" className="w-8 h-8 flex-shrink-0">
+                <Icon name="X" size={18} className="text-gray-400" />
+              </Button>
+            </Card>
+
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-xl font-bold">История</h2>
+              <button className="text-[#21A038] font-medium text-sm">Все</button>
+            </div>
+
+            <Card className="bg-white rounded-3xl divide-y">
+              <div className="p-4 flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Icon name="Building" size={20} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">Григорий Андреевич Г.</p>
+                  <p className="text-xs text-gray-500">7 октября • Перевод в банк-партнёр по номеру телефона</p>
+                </div>
+                <span className="font-bold flex-shrink-0">10 000 ₽</span>
+              </div>
+
+              <div className="p-4 flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Icon name="User" size={20} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">Галина Александровна Б.</p>
+                  <p className="text-xs text-gray-500">7 октября • Входящий перевод</p>
+                </div>
+                <span className="font-bold text-green-600 flex-shrink-0">+5 000 ₽</span>
+              </div>
+
+              <div className="p-4 flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Icon name="User" size={20} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">Валерий Иванович Г.</p>
+                  <p className="text-xs text-gray-500">7 октября • Входящий перевод</p>
+                </div>
+                <span className="font-bold text-green-600 flex-shrink-0">+5 000 ₽</span>
+              </div>
+            </Card>
+
+            <div className="mt-6">
+              <h2 className="text-xl font-bold mb-3">Переводы</h2>
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {['ГА', 'ИО', 'КМ', 'АВ', 'ПН', 'ГА', 'МІС'].map((initials, i) => (
+                  <div key={i} className="flex flex-col items-center gap-2 min-w-[60px]">
+                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center border-2 border-gray-200 relative">
+                      <span className="font-bold text-sm">{initials}</span>
+                      {i < 3 && (
+                        <button className="absolute -top-1 -right-1 w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center">
+                          <Icon name="X" size={12} className="text-gray-600" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t max-w-md mx-auto">
+            <div className="flex justify-around px-2 py-2">
+              <Button
+                variant="ghost"
+                className="flex-col h-auto py-2 px-3 text-[#21A038]"
+              >
+                <Icon name="Home" size={24} />
+                <span className="text-[10px] mt-1 font-medium">Главный</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="flex-col h-auto py-2 px-3"
+                onClick={() => setPage('main')}
+              >
+                <Icon name="BarChart3" size={24} className="text-gray-600" />
+                <span className="text-[10px] mt-1 text-gray-600">Накопления</span>
+              </Button>
+              <Button variant="ghost" className="flex-col h-auto py-2 px-3">
+                <Icon name="Sparkles" size={24} className="text-gray-600" />
+                <span className="text-[10px] mt-1 text-gray-600">Ассистент</span>
+              </Button>
+              <Button variant="ghost" className="flex-col h-auto py-2 px-3">
+                <Icon name="Send" size={24} className="text-gray-600" />
+                <span className="text-[10px] mt-1 text-gray-600">Платежи</span>
+              </Button>
+              <Button variant="ghost" className="flex-col h-auto py-2 px-3">
+                <Icon name="Clock" size={24} className="text-gray-600" />
+                <span className="text-[10px] mt-1 text-gray-600">История</span>
               </Button>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {cards.map((card) => (
-                <Card key={card.id} className="overflow-hidden">
-                  <div className="h-48 bg-gradient-to-br from-[#21A038] to-[#147B2C] p-6 text-white flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                      <Icon name="CreditCard" size={32} />
-                      <span className="text-sm font-medium">{card.type === 'debit' ? 'Дебетовая' : 'Кредитная'}</span>
-                    </div>
-                    <div>
-                      <p className="text-lg tracking-wider mb-3">•••• {card.number}</p>
-                      <p className="text-2xl font-bold">{card.balance.toLocaleString('ru-RU')} ₽</p>
-                    </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        Детали
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        Настройки
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+          </nav>
+        </div>
+      </div>
+    );
+  }
 
-          <TabsContent value="profile" className="space-y-4">
-            <h2 className="text-2xl font-bold text-[#333333]">Профиль</h2>
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 bg-[#21A038] rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                    АБ
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-[#333333]">Александр Белов</h3>
-                    <p className="text-muted-foreground">+7 (900) 123-45-67</p>
-                  </div>
-                </div>
-                <div className="border-t pt-4 space-y-3">
-                  <div className="flex justify-between items-center py-2 hover:bg-muted/50 px-3 rounded-lg cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Icon name="Settings" size={20} className="text-[#21A038]" />
-                      <span className="font-medium text-[#333333]">Настройки</span>
-                    </div>
-                    <Icon name="ChevronRight" size={20} className="text-muted-foreground" />
-                  </div>
-                  <div className="flex justify-between items-center py-2 hover:bg-muted/50 px-3 rounded-lg cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Icon name="Shield" size={20} className="text-[#21A038]" />
-                      <span className="font-medium text-[#333333]">Безопасность</span>
-                    </div>
-                    <Icon name="ChevronRight" size={20} className="text-muted-foreground" />
-                  </div>
-                  <div className="flex justify-between items-center py-2 hover:bg-muted/50 px-3 rounded-lg cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Icon name="Bell" size={20} className="text-[#21A038]" />
-                      <span className="font-medium text-[#333333]">Уведомления</span>
-                    </div>
-                    <Icon name="ChevronRight" size={20} className="text-muted-foreground" />
-                  </div>
-                  <div className="flex justify-between items-center py-2 hover:bg-muted/50 px-3 rounded-lg cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Icon name="HelpCircle" size={20} className="text-[#21A038]" />
-                      <span className="font-medium text-[#333333]">Помощь</span>
-                    </div>
-                    <Icon name="ChevronRight" size={20} className="text-muted-foreground" />
-                  </div>
-                </div>
-              </CardContent>
+  return (
+    <div className="min-h-screen bg-[#f0effa]">
+      <div className="max-w-md mx-auto bg-[#f0effa] min-h-screen pb-20">
+        <header className="p-4 flex items-center justify-between gap-3">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0" />
+          <div className="flex-1 bg-white/60 backdrop-blur rounded-full px-4 py-2.5 flex items-center gap-2">
+            <Icon name="Search" size={18} className="text-gray-500" />
+            <span className="text-gray-600 text-sm">Поиск</span>
+          </div>
+          <Button variant="ghost" size="icon" className="flex-shrink-0">
+            <Icon name="Grid3x3" size={24} />
+          </Button>
+        </header>
+
+        <div className="px-4 py-2">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">Накопления</h1>
+            <Button variant="ghost" size="icon">
+              <Icon name="EyeOff" size={24} />
+            </Button>
+          </div>
+
+          <Card className="bg-white rounded-3xl p-6 mb-6">
+            <p className="text-sm text-gray-600 mb-1">Всего средств на всех счетах</p>
+            <p className="text-4xl font-bold mb-4">127,19 ₽</p>
+            <div className="h-2 bg-purple-500 rounded-full mb-3" />
+            <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+              <span className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-gray-300 rounded-full" />
+                Карты
+              </span>
+              <span className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-gray-300 rounded-full" />
+                Вклады
+              </span>
+              <span className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-purple-500 rounded-full" />
+                Инвестиции
+              </span>
+              <span className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-gray-300 rounded-full" />
+                Пенсии
+              </span>
+            </div>
+          </Card>
+
+          <Card className="bg-white rounded-3xl p-5 mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Вклады и счета</h2>
+              <Button variant="ghost" size="icon" className="text-[#21A038] -mr-2">
+                <Icon name="ChevronUp" size={24} />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-[#21A038]">
+                <Icon name="Plus" size={24} />
+              </Button>
+            </div>
+            <Card className="bg-gray-50 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center border flex-shrink-0">
+                <Icon name="Vault" size={24} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold mb-0.5">Откройте вклад онлайн</p>
+                <p className="text-xs text-gray-500">Просто, быстро, удобно. От 1000 ₽</p>
+              </div>
             </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+          </Card>
+
+          <Card className="bg-white rounded-3xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Инвестиции</h2>
+              <Button variant="ghost" size="icon" className="text-[#21A038] -mr-2">
+                <Icon name="ChevronUp" size={24} />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-[#21A038]">
+                <Icon name="Plus" size={24} />
+              </Button>
+            </div>
+            <Card className="bg-gray-50 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center border flex-shrink-0">
+                <Icon name="TrendingUp" size={24} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold mb-0.5">Начать инвестировать просто</p>
+                <p className="text-xs text-gray-500">Начальный капитал и опыт не имеют значения</p>
+              </div>
+            </Card>
+          </Card>
+        </div>
+
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t max-w-md mx-auto">
+          <div className="flex justify-around px-2 py-2">
+            <Button
+              variant="ghost"
+              className="flex-col h-auto py-2 px-3"
+              onClick={() => setPage('wallet')}
+            >
+              <Icon name="Home" size={24} className="text-gray-600" />
+              <span className="text-[10px] mt-1 text-gray-600">Главный</span>
+            </Button>
+            <Button variant="ghost" className="flex-col h-auto py-2 px-3 text-[#21A038]">
+              <Icon name="BarChart3" size={24} />
+              <span className="text-[10px] mt-1 font-medium">Накопления</span>
+            </Button>
+            <Button variant="ghost" className="flex-col h-auto py-2 px-3">
+              <Icon name="Sparkles" size={24} className="text-gray-600" />
+              <span className="text-[10px] mt-1 text-gray-600">Ассистент</span>
+            </Button>
+            <Button variant="ghost" className="flex-col h-auto py-2 px-3">
+              <Icon name="Send" size={24} className="text-gray-600" />
+              <span className="text-[10px] mt-1 text-gray-600">Платежи</span>
+            </Button>
+            <Button variant="ghost" className="flex-col h-auto py-2 px-3">
+              <Icon name="Clock" size={24} className="text-gray-600" />
+              <span className="text-[10px] mt-1 text-gray-600">История</span>
+            </Button>
+          </div>
+        </nav>
+      </div>
     </div>
   );
 }
